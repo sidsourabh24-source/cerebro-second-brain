@@ -1,36 +1,143 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# CEREBRO — Your AI Second Brain
 
-## Getting Started
+> A personal AI operating system that remembers, organizes, and assists your digital life through intelligent memory, tasks, voice, and automation.
 
-First, run the development server:
+## 🧠 What is CEREBRO?
 
+CEREBRO is a full-stack AI-powered personal operating system — a **second brain** that:
+- 💬 **Remembers** your conversations across sessions using vector memory
+- 📋 **Manages** tasks with AI-powered prioritization
+- 📄 **Understands** documents via semantic search
+- 🎙️ **Responds** to voice commands
+- 🧩 **Learns** your preferences and context over time
+
+## ⚡ Tech Stack
+
+| Layer | Technology |
+|-------|-----------|
+| Framework | Next.js 16 (App Router) |
+| Language | TypeScript |
+| Styling | Tailwind CSS v4 |
+| Auth + DB | Supabase |
+| Vector Memory | Supabase pgvector |
+| AI Engine | Google Gemini 1.5 Flash |
+| Voice | Browser Web Speech API |
+| Animations | Framer Motion |
+| State | Zustand |
+| Deployment | Vercel |
+
+## 🚀 Getting Started
+
+### 1. Clone the repo
 ```bash
-npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
+git clone https://github.com/sidsourabh24-source/cerebro-second-brain.git
+cd cerebro-second-brain
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+### 2. Install dependencies
+```bash
+npm install
+```
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+### 3. Set up environment variables
+```bash
+cp .env.example .env.local
+# Fill in your Supabase and Gemini API keys
+```
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+| Variable | Where to get it |
+|----------|----------------|
+| `NEXT_PUBLIC_SUPABASE_URL` | Supabase → Project Settings → API |
+| `NEXT_PUBLIC_SUPABASE_ANON_KEY` | Supabase → Project Settings → API (anon/public key) |
+| `SUPABASE_SERVICE_ROLE_KEY` | Supabase → Project Settings → API (service_role key) |
+| `GEMINI_API_KEY` | [aistudio.google.com](https://aistudio.google.com) |
 
-## Learn More
+### 4. Set up Supabase Database
+- Create a project at [supabase.com](https://supabase.com)
+- Go to **SQL Editor** and run the full migration file:
+```
+supabase/migrations/001_initial_schema.sql
+```
+This creates all tables (`conversations`, `messages`, `memories`, `tasks`, `documents`), enables `pgvector`, sets up RLS policies, and creates semantic search functions.
 
-To learn more about Next.js, take a look at the following resources:
+### 5. Run the development server
+```bash
+npm run dev
+```
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+Open [http://localhost:3000](http://localhost:3000)
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+## 📁 Project Structure
 
-## Deploy on Vercel
+```
+cerebro/
+├── src/
+│   ├── app/
+│   │   ├── (auth)/                  # Public auth pages
+│   │   │   └── login/               # Login + Signup (page + LoginForm)
+│   │   ├── (app)/                   # Protected pages (require auth)
+│   │   │   ├── layout.tsx           # App shell: Sidebar + main area
+│   │   │   ├── dashboard/           # Main dashboard
+│   │   │   ├── chat/                # AI Chat interface
+│   │   │   ├── memory/              # Memory explorer
+│   │   │   ├── tasks/               # Task manager
+│   │   │   ├── documents/           # Document intelligence
+│   │   │   ├── voice/               # Voice assistant
+│   │   │   └── profile/             # User profile
+│   │   ├── api/
+│   │   │   ├── chat/route.ts        # POST: streaming Gemini chat
+│   │   │   ├── memories/route.ts    # GET/POST/DELETE: vector memories
+│   │   │   └── tasks/route.ts       # GET/POST/PATCH: task management
+│   │   ├── auth/
+│   │   │   └── callback/route.ts    # Supabase OAuth callback
+│   │   ├── globals.css              # Design system (CSS vars, glassmorphism)
+│   │   ├── layout.tsx               # Root layout (fonts, SEO, bg mesh)
+│   │   └── page.tsx                 # Root redirect (→ /login or /dashboard)
+│   ├── components/
+│   │   └── layout/
+│   │       └── Sidebar.tsx          # Animated collapsible sidebar
+│   └── lib/
+│       ├── gemini.ts                # Gemini AI client (chat + embeddings)
+│       ├── memory.ts                # Vector memory store/search/extract
+│       └── supabase/
+│           ├── client.ts            # Browser Supabase client
+│           └── server.ts            # Server-side Supabase client (SSR)
+├── supabase/
+│   └── migrations/
+│       └── 001_initial_schema.sql   # Full DB schema + RLS + pgvector
+├── scripts/
+│   ├── create-labels.ps1            # GitHub labels setup
+│   ├── create-issues.ps1            # GitHub issues setup
+│   ├── create-project.ps1           # GitHub Project V2 board setup
+│   └── test-supabase.mjs            # Supabase connection tester
+└── src/proxy.ts                     # Next.js 16 route protection proxy
+```
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
+## 🌿 Git Branching Strategy
 
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+```
+main              ← Production-ready
+├── develop       ← Integration branch
+│   ├── feat/auth         ← Auth, design system, API routes (current)
+│   ├── feat/chat         ← Chat UI + streaming
+│   ├── feat/memory       ← Memory explorer UI
+│   ├── feat/tasks        ← Task manager UI
+│   ├── feat/documents    ← Document intelligence
+│   ├── feat/voice        ← Voice assistant
+│   └── feat/dashboard    ← Main dashboard UI
+└── chore/setup   ← Initial setup
+```
+
+## 🗺️ Build Roadmap
+
+| Module | Focus | Status |
+|--------|-------|--------|
+| Module 1 — Foundation | Scaffold, DB, API routes, Auth, Design System | ✅ Complete |
+| Module 2 — AI Features | Chat, Memory Explorer, Voice | 🔄 In Progress |
+| Module 3 — Productivity | Tasks UI, Documents, AI generation | ⬜ Planned |
+| Module 4 — Dashboard | Stats, polish, mobile, animations | ⬜ Planned |
+| Module 5 — Deployment | Vercel, production, launch | ⬜ Planned |
+
+## 📄 License
+
+MIT
