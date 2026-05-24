@@ -32,9 +32,10 @@ export default function LoginForm() {
     setSuccess('')
 
     try {
+      const trimmedEmail = email.trim()
       if (mode === 'signup') {
         const { error } = await supabase.auth.signUp({
-          email,
+          email: trimmedEmail,
           password,
           options: {
             data: { full_name: fullName },
@@ -45,7 +46,7 @@ export default function LoginForm() {
         setSuccess('Account created! Check your email to confirm, then sign in.')
         setMode('signin')
       } else {
-        const { error } = await supabase.auth.signInWithPassword({ email, password })
+        const { error } = await supabase.auth.signInWithPassword({ email: trimmedEmail, password })
         if (error) throw error
         router.push('/dashboard')
         router.refresh()
