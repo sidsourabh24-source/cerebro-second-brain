@@ -37,7 +37,7 @@ export async function GET(req: NextRequest) {
     if (convError) throw convError
     return NextResponse.json({ conversations })
   } catch (error: any) {
-    console.error('Conversations GET error:', error)
+    console.error('Conversations GET error: ' + (error.message || String(error)) + ' | Code: ' + error.code + ' | Details: ' + JSON.stringify(error.details) + ' | Hint: ' + error.hint)
     return NextResponse.json({ error: error.message || 'Internal Server Error' }, { status: 500 })
   }
 }
@@ -94,7 +94,7 @@ export async function POST(req: NextRequest) {
     if (error) throw error
     return NextResponse.json({ conversation: data }, { status: 201 })
   } catch (error: any) {
-    console.error('Conversations POST error:', error)
+    console.error('Conversations POST error: ' + (error.message || String(error)) + ' | Code: ' + error.code + ' | Details: ' + JSON.stringify(error.details) + ' | Hint: ' + error.hint)
     return NextResponse.json({ error: error.message || 'Internal Server Error' }, { status: 500 })
   }
 }
