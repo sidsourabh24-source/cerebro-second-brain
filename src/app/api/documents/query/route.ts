@@ -30,7 +30,7 @@ export async function POST(req: NextRequest) {
     // 2. Fetch relevant vector text chunks using Supabase RPC function
     // match_document_id is optional; if null, it searches across all user's documents!
     const { data: chunks, error: rpcError } = await supabase.rpc('search_document_chunks', {
-      query_embedding: JSON.stringify(queryEmbedding),
+      query_embedding: queryEmbedding,
       match_user_id: user.id,
       match_document_id: documentId || null,
       match_threshold: 0.35, // Balanced threshold for document semantic retrieval

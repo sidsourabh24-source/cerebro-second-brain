@@ -42,7 +42,7 @@ export async function searchMemories(
   const queryEmbedding = await generateEmbedding(query)
 
   const { data, error } = await supabase.rpc('search_memories', {
-    query_embedding: JSON.stringify(queryEmbedding),
+    query_embedding: queryEmbedding,
     match_user_id: userId,
     match_threshold: threshold,
     match_count: limit,

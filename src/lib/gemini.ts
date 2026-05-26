@@ -6,7 +6,7 @@ if (!process.env.GEMINI_API_KEY) {
 
 const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY)
 
-// Main chat model — Gemini 1.5 Flash (free tier)
+// Main chat model — Gemini 1.5 Flash
 export const geminiChat = genAI.getGenerativeModel({
   model: 'gemini-1.5-flash',
   generationConfig: {
@@ -19,7 +19,7 @@ export const geminiChat = genAI.getGenerativeModel({
 
 // Embedding model — for semantic memory
 export const geminiEmbedding = genAI.getGenerativeModel({
-  model: 'text-embedding-004',
+  model: 'embedding-001',
 })
 
 /**
@@ -38,9 +38,17 @@ export async function streamChatResponse(
   messages: { role: 'user' | 'model'; parts: { text: string }[] }[],
   systemPrompt?: string
 ) {
+  // Clean history: Gemini requires history to start with a 'user' message
+  let history = messages.slice(0, -1)
+  while (history.length > 0 && history[0].role !== 'user') {
+    history.shift()
+  }
+
   const chat = geminiChat.startChat({
-    history: messages.slice(0, -1), // All but last message
-    systemInstruction: systemPrompt,
+    history: history,
+    systemInstruction: systemPrompt 
+      ? { role: 'system', parts: [{ text: systemPrompt }] } 
+      : undefined,
   })
 
   const lastMessage = messages[messages.length - 1]
