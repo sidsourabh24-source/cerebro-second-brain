@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { createClient } from '@/lib/supabase/server'
 import { generateEmbedding, generateResponse } from '@/lib/gemini'
-import pdf from 'pdf-parse'
+import { PDFParse } from 'pdf-parse'
 
 export async function GET(req: NextRequest) {
   try {
@@ -47,21 +47,19 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: 'Only PDF documents are supported' }, { status: 400 })
     }
 
-    // Convert file to buffer for pdf-parse
+    // Extract text using PDFParse
     const arrayBuffer = await file.arrayBuffer()
-    const buffer = Buffer.from(arrayBuffer)
-
-    // Extract text using pdf-parse
-    let parsedPdf
+    let rawText = ''
     try {
-      const parsePdf = (pdf as any).default || pdf
-      parsedPdf = await parsePdf(buffer)
+      const parser = new PDFParse({ data: arrayBuffer })
+      const parsedPdf = await parser.getText()
+      rawText = parsedPdf.text || ''
+      await parser.destroy()
     } catch (parseErr: any) {
-      console.error('pdf-parse failed:', parseErr)
+      console.error('PDFParse failed:', parseErr)
       return NextResponse.json({ error: 'Failed to extract text from PDF file.' }, { status: 422 })
     }
 
-    const rawText = parsedPdf.text || ''
     const cleanedText = rawText.replace(/\s+/g, ' ').trim()
 
     if (!cleanedText) {
