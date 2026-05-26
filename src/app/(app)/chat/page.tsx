@@ -16,7 +16,9 @@ import {
   Menu, 
   X,
   Copy,
-  Check
+  Check,
+  Volume2,
+  VolumeX
 } from 'lucide-react'
 
 interface Conversation {
@@ -42,9 +44,54 @@ export default function ChatPage() {
   const [streamingMessage, setStreamingMessage] = useState('')
   const [sidebarOpen, setSidebarOpen] = useState(true)
   const [copiedId, setCopiedId] = useState<string | null>(null)
+  const [vocalize, setVocalize] = useState(false)
 
   const messagesEndRef = useRef<HTMLDivElement>(null)
   const inputRef = useRef<HTMLTextAreaElement>(null)
+  const synthRef = useRef<SpeechSynthesis | null>(null)
+
+  // Initialize Speech Synthesis for response vocalization
+  useEffect(() => {
+    if (typeof window !== 'undefined') {
+      synthRef.current = window.speechSynthesis
+    }
+    return () => {
+      if (synthRef.current) {
+        synthRef.current.cancel()
+      }
+    }
+  }, [])
+
+  const speakResponse = (text: string) => {
+    if (!synthRef.current) return
+    synthRef.current.cancel()
+
+    const cleanText = text
+      .replace(/[\*\#\_]/g, '')
+      .replace(/\[([^\]]+)\]\([^\)]+\)/g, '$1')
+      .replace(/`([^`]+)`/g, '$1')
+      .trim()
+
+    if (!cleanText) return
+
+    const utterance = new SpeechSynthesisUtterance(cleanText)
+    const voices = synthRef.current.getVoices()
+    const bestVoice = voices.find(v => 
+      v.name.toLowerCase().includes('google') && v.lang.toLowerCase().startsWith('en')
+    ) || voices.find(v => v.lang.toLowerCase().startsWith('en')) || voices[0]
+
+    if (bestVoice) utterance.voice = bestVoice
+    utterance.rate = 1.05
+    synthRef.current.speak(utterance)
+  }
+
+  const toggleVocalize = () => {
+    const nextState = !vocalize
+    setVocalize(nextState)
+    if (!nextState && synthRef.current) {
+      synthRef.current.cancel()
+    }
+  }
 
   // Fetch conversations on load
   useEffect(() => {
@@ -82,6 +129,7 @@ export default function ChatPage() {
   }
 
   const fetchMessages = async (convId: string) => {
+    if (synthRef.current) synthRef.current.cancel()
     try {
       const res = await fetch(`/api/conversations?id=${convId}`)
       const data = await res.json()
@@ -94,6 +142,7 @@ export default function ChatPage() {
   }
 
   const handleStartNewChat = () => {
+    if (synthRef.current) synthRef.current.cancel()
     setActiveConvId(null)
     setMessages([])
     if (inputRef.current) inputRef.current.focus()
@@ -199,6 +248,10 @@ export default function ChatPage() {
       const assistantMsg: Message = { role: 'assistant', content: assistantText }
       setMessages(prev => [...prev, assistantMsg])
       setStreamingMessage('')
+
+      if (vocalize) {
+        speakResponse(assistantText)
+      }
 
       // Refresh conversations list to update title / sorting
       fetchConversations()
@@ -547,8 +600,19 @@ export default function ChatPage() {
                   lineHeight: '1.5',
                 }}
               />
-              <div className="absolute right-3 bottom-2.5 flex items-center gap-1.5">
-                {/* Voice button (link placeholder) */}
+              <div className="absolute right-3 bottom-2.5 flex items-center gap-2">
+                <button
+                  type="button"
+                  onClick={toggleVocalize}
+                  className={`p-1 rounded transition-colors ${
+                    vocalize 
+                      ? 'text-cyan-400 hover:bg-cyan-500/10' 
+                      : 'text-text-muted hover:bg-white/5'
+                  }`}
+                  title={vocalize ? "Mute vocal feedback" : "Enable vocal feedback"}
+                >
+                  {vocalize ? <Volume2 size={15} /> : <VolumeX size={15} />}
+                </button>
                 <span className="text-[10px]" style={{ color: 'var(--text-muted)' }}>
                   Enter ↵ to send
                 </span>
