@@ -184,10 +184,10 @@ export function useVoice({
           body: JSON.stringify({ firstMessage: queryText })
         })
         const createData = await createRes.json()
-        if (createRes.ok && createData.conversation) {
+        if (createRes.ok && createData.conversation && createData.conversation.id) {
           currentConvId = createData.conversation.id
           if (onConversationIdCreated) {
-            onConversationIdCreated(currentConvId)
+            onConversationIdCreated(createData.conversation.id)
           }
         } else {
           throw new Error('Failed to create conversation')
