@@ -2,6 +2,8 @@ import { NextRequest, NextResponse } from 'next/server'
 import { createClient } from '@/lib/supabase/server'
 import { generateEmbedding, generateResponse } from '@/lib/gemini'
 import { PDFParse } from 'pdf-parse'
+import path from 'path'
+import { pathToFileURL } from 'url'
 
 export async function GET(req: NextRequest) {
   try {
@@ -47,17 +49,25 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: 'Only PDF documents are supported' }, { status: 400 })
     }
 
-    // Extract text using PDFParse
+    // Convert to Node Buffer for high compatibility
     const arrayBuffer = await file.arrayBuffer()
+    const buffer = Buffer.from(arrayBuffer)
+
+    // Extract text using modern PDFParse ESM library
     let rawText = ''
     try {
-      const parser = new PDFParse({ data: arrayBuffer })
+      // Resolve absolute path to the PDFJS worker and convert to a file:// URL to satisfy ESM loaders on Windows
+      const workerPath = path.join(process.cwd(), 'node_modules', 'pdfjs-dist', 'legacy', 'build', 'pdf.worker.mjs')
+      const workerUrl = pathToFileURL(workerPath).href
+      PDFParse.setWorker(workerUrl)
+
+      const parser = new PDFParse({ data: buffer })
       const parsedPdf = await parser.getText()
       rawText = parsedPdf.text || ''
       await parser.destroy()
     } catch (parseErr: any) {
       console.error('PDFParse failed:', parseErr)
-      return NextResponse.json({ error: 'Failed to extract text from PDF file.' }, { status: 422 })
+      return NextResponse.json({ error: `Failed to extract text from PDF file: ${parseErr.message || String(parseErr)}` }, { status: 422 })
     }
 
     const cleanedText = rawText.replace(/\s+/g, ' ').trim()
