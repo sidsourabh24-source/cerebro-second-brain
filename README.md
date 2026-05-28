@@ -133,10 +133,10 @@ main              ← Production-ready
 | Module | Focus | Status |
 |--------|-------|--------|
 | Module 1 — Foundation | Scaffold, DB, API routes, Auth, Design System | ✅ Complete |
-| Module 2 — AI Features | Chat, Memory Explorer, Voice | 🔄 In Progress |
-| Module 3 — Productivity | Tasks UI, Documents, AI generation | ⬜ Planned |
-| Module 4 — Dashboard | Stats, polish, mobile, animations | ⬜ Planned |
-| Module 5 — Deployment | Vercel, production, launch | ⬜ Planned |
+| Module 2 — AI Features | Chat, Memory Explorer, Voice | 🔄 In Progress *(Voice Pending)* |
+| Module 3 — Productivity | Tasks UI, Documents, AI generation | ✅ Complete |
+| Module 4 — Dashboard | Stats, polish, mobile, animations | ✅ Complete |
+| Module 5 — Deployment | Vercel, production, launch | ⬜ Planned *(Day 6)* |
 
 ## 📄 License
 
