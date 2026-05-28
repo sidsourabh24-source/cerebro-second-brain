@@ -48,7 +48,7 @@ Be concise, helpful, and direct.${memoryContext}`
           controller.close()
 
           // Background task: save messages and extract memory after stream finishes
-          saveInteractionAsync(user.id, lastMessage.parts[0].text, fullResponse, conversationId)
+          saveInteractionAsync(supabase, user.id, lastMessage.parts[0].text, fullResponse, conversationId)
         } catch (error) {
           console.error('Error during streaming:', error)
           controller.error(error)
@@ -72,9 +72,8 @@ Be concise, helpful, and direct.${memoryContext}`
 /**
  * Fire-and-forget function to store the conversation interaction and trigger memory extraction
  */
-async function saveInteractionAsync(userId: string, userText: string, assistantText: string, conversationId?: string) {
+async function saveInteractionAsync(supabase: any, userId: string, userText: string, assistantText: string, conversationId?: string) {
   try {
-    const supabase = await createClient()
 
     let conversation_id = conversationId
 

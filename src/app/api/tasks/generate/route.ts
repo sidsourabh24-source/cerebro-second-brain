@@ -37,14 +37,18 @@ Input: "${prompt}"
 `
 
     const response = await generateResponse(aiPrompt)
-    const cleaned = response.replace(/```json\n?|\n?```/g, '').trim()
-    
+    const jsonMatch = response.match(/\{[\s\S]*\}/)
+    if (!jsonMatch) {
+      console.error('Failed to find JSON in AI response:', response)
+      return NextResponse.json({ error: 'AI failed to construct a valid task schema.' }, { status: 422 })
+    }
+
     let taskAttributes
     try {
-      taskAttributes = JSON.parse(cleaned)
+      taskAttributes = JSON.parse(jsonMatch[0].trim())
     } catch (parseErr) {
-      console.error('Failed to parse AI structured response:', cleaned, parseErr)
-      return NextResponse.json({ error: 'AI failed to construct a valid task schema.' }, { status: 422 })
+      console.error('Failed to parse AI structured response:', jsonMatch[0], parseErr)
+      return NextResponse.json({ error: 'AI failed to parse task schema.' }, { status: 422 })
     }
 
     return NextResponse.json({ task: taskAttributes })

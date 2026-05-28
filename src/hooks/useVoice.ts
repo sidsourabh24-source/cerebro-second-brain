@@ -35,12 +35,18 @@ export function useVoice({
   const activeUtteranceRef = useRef<SpeechSynthesisUtterance | null>(null)
   const localConvIdRef = useRef<string | null>(conversationId)
   const silenceTimerRef = useRef<any>(null)
+  const activeQueryRef = useRef(activeQuery)
+  const onConversationIdCreatedRef = useRef(onConversationIdCreated)
+  const onMessageReceivedRef = useRef(onMessageReceived)
 
   // Keep refs synchronized to prevent stale closures
   useEffect(() => { enabledRef.current = enabled }, [enabled])
   useEffect(() => { voiceStateRef.current = voiceState }, [voiceState])
   useEffect(() => { messagesRef.current = messages }, [messages])
   useEffect(() => { localConvIdRef.current = conversationId }, [conversationId])
+  useEffect(() => { activeQueryRef.current = activeQuery }, [activeQuery])
+  useEffect(() => { onConversationIdCreatedRef.current = onConversationIdCreated }, [onConversationIdCreated])
+  useEffect(() => { onMessageReceivedRef.current = onMessageReceived }, [onMessageReceived])
 
   // Initialize Speech Synthesis
   useEffect(() => {
@@ -171,7 +177,7 @@ export function useVoice({
     const userMsg: Message = { role: 'user', content: queryText }
     const updatedMessages = [...messagesRef.current, userMsg]
     setMessages(updatedMessages)
-    if (onMessageReceived) onMessageReceived(userMsg)
+    if (onMessageReceivedRef.current) onMessageReceivedRef.current(userMsg)
 
     let currentConvId = localConvIdRef.current
 
@@ -186,8 +192,8 @@ export function useVoice({
         const createData = await createRes.json()
         if (createRes.ok && createData.conversation && createData.conversation.id) {
           currentConvId = createData.conversation.id
-          if (onConversationIdCreated) {
-            onConversationIdCreated(createData.conversation.id)
+          if (onConversationIdCreatedRef.current) {
+            onConversationIdCreatedRef.current(createData.conversation.id)
           }
         } else {
           throw new Error('Failed to create conversation')
@@ -231,7 +237,7 @@ export function useVoice({
       // 5. Finalize message and speak response
       const assistantMsg: Message = { role: 'assistant', content: assistantText }
       setMessages(prev => [...prev, assistantMsg])
-      if (onMessageReceived) onMessageReceived(assistantMsg)
+      if (onMessageReceivedRef.current) onMessageReceivedRef.current(assistantMsg)
 
       // Speak out the final text
       speak(assistantText)
@@ -240,10 +246,10 @@ export function useVoice({
       console.error('Error in sendQuery:', err)
       const errorMsg: Message = { role: 'assistant', content: 'CEREBRO experienced a sync failure. Please check connection.' }
       setMessages(prev => [...prev, errorMsg])
-      if (onMessageReceived) onMessageReceived(errorMsg)
+      if (onMessageReceivedRef.current) onMessageReceivedRef.current(errorMsg)
       speak(errorMsg.content)
     }
-  }, [onConversationIdCreated, onMessageReceived, speak])
+  }, [speak])
 
   // Initialize and manage SpeechRecognition
   useEffect(() => {
@@ -338,8 +344,8 @@ export function useVoice({
     // Handle Speech End / Timeout auto-capture inside the recognition system
     rec.onend = () => {
       // If voiceState was 'listening' when we ended, it means the user stopped speaking and we got a query!
-      if (voiceStateRef.current === 'listening' && activeQuery.trim()) {
-        const queryToSubmit = activeQuery
+      if (voiceStateRef.current === 'listening' && activeQueryRef.current.trim()) {
+        const queryToSubmit = activeQueryRef.current
         setActiveQuery('')
         setTranscript('')
         sendQuery(queryToSubmit)

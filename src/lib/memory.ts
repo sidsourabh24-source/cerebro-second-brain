@@ -77,8 +77,11 @@ Return format: ["memory 1", "memory 2"] or []
 
   try {
     const response = await generateResponse(extractionPrompt)
-    const cleaned = response.replace(/```json\n?|\n?```/g, '').trim()
-    const memories: string[] = JSON.parse(cleaned)
+    const jsonMatch = response.match(/\[[\s\S]*\]/)
+    if (!jsonMatch) {
+      throw new Error('AI output did not contain a valid JSON array')
+    }
+    const memories: string[] = JSON.parse(jsonMatch[0].trim())
 
     if (Array.isArray(memories) && memories.length > 0) {
       await Promise.all(

@@ -1,13 +1,10 @@
 import { GoogleGenerativeAI } from '@google/generative-ai'
 
-if (!process.env.GEMINI_API_KEY) {
-  throw new Error('GEMINI_API_KEY is not set in environment variables')
-}
-
-const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY)
+const apiKey = process.env.GEMINI_API_KEY
+const genAI = apiKey ? new GoogleGenerativeAI(apiKey) : null
 
 // Main chat model — Gemini 1.5 Flash
-export const geminiChat = genAI.getGenerativeModel({
+export const geminiChat = genAI ? genAI.getGenerativeModel({
   model: 'gemini-2.5-flash',
   generationConfig: {
     temperature: 0.8,
@@ -15,12 +12,12 @@ export const geminiChat = genAI.getGenerativeModel({
     topK: 40,
     maxOutputTokens: 8192,
   },
-})
+}) : null
 
 // Embedding model — for semantic memory
-export const geminiEmbedding = genAI.getGenerativeModel({
+export const geminiEmbedding = genAI ? genAI.getGenerativeModel({
   model: 'text-embedding-004',
-})
+}) : null
 
 /**
  * Generate an embedding vector for a text string
@@ -29,6 +26,9 @@ export const geminiEmbedding = genAI.getGenerativeModel({
  */
 export async function generateEmbedding(text: string): Promise<number[]> {
   try {
+    if (!geminiEmbedding) {
+      throw new Error('geminiEmbedding is not initialized (missing GEMINI_API_KEY)')
+    }
     const result = await geminiEmbedding.embedContent(text)
     return result.embedding.values
   } catch (err: any) {
@@ -53,6 +53,10 @@ export async function streamChatResponse(
     history.shift()
   }
 
+  if (!geminiChat) {
+    throw new Error('geminiChat is not initialized (missing GEMINI_API_KEY)')
+  }
+
   const chat = geminiChat.startChat({
     history: history,
     systemInstruction: systemPrompt 
@@ -72,6 +76,9 @@ export async function streamChatResponse(
  */
 export async function generateResponse(prompt: string): Promise<string> {
   try {
+    if (!geminiChat) {
+      throw new Error('geminiChat is not initialized (missing GEMINI_API_KEY)')
+    }
     const result = await geminiChat.generateContent(prompt)
     return result.response.text()
   } catch (err: any) {
